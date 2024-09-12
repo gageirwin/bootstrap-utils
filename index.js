@@ -1,3 +1,15 @@
+$.extend(true, $.fn.dataTable.defaults, {
+    language: {
+        search: "",
+        searchPlaceholder: "Search..."
+    },
+    oClasses: {
+        search: {
+            input: "form-control"
+        }
+    }
+})
+
 
 
 $(document).ready(function () {
