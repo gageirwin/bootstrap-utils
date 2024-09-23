@@ -1,16 +1,46 @@
 
-
-
-
 $(document).ready(function () {
 
-    initThingTable()
-    initEntriesTable()
+    const entriesTable = $("#entriesTable").DataTable({
+        select: true,
+        scroller: true,
+        columns: [
+            { data: "1", title: "Column 1" },
+            { data: "2", title: "Column 2" },
+            { data: "3", title: "Column 3" }
+        ],
+        layout: {
+            topStart: {
+                buttons: [
+                    {
+                        text: 'Add',
+                        name: "addButton",
+                        action: function (e, dt, node, config) {
+                            alert('Button activated')
+                        }
+                    },
+                    {
+                        text: 'Edit',
+                        name: "editButton",
+                        action: function (e, dt, node, config) {
+                            alert('Button activated')
+                        },
+                        enabled: false
+                    },
+                    {
+                        text: 'Delete',
+                        name: "deleteButton",
+                        action: function (e, dt, node, config) {
+                            alert('Button activated')
+                        },
+                        enabled: false
+                    },
+                ]
+            }
+        }
+    })
 
-})
-
-function initThingTable() {
-    const table = $("#topOptions").DataTable({
+    const thingTable = $("#topOptions").DataTable({
         data: tableOneData,
         select: true,
         scroller: true,
@@ -49,7 +79,7 @@ function initThingTable() {
                         text: 'Compare',
                         name: "compareButton",
                         action: function (e, dt, node, config) {
-                            compareItems(table.rows({ selected: true }).data().toArray())
+                            compareItems(thingTable.rows({ selected: true }).data().toArray())
                         },
                         enabled: false
                     },
@@ -66,71 +96,29 @@ function initThingTable() {
         }
     })
 
-    table.off("select deselect").on("select deselect", function (e, dt, type, indexes) {
-        const selectedRows = table.rows({ selected: true }).count()
-        table.button('viewButton:name').enable(selectedRows === 1)
-        table.button('editButton:name').enable(selectedRows === 1)
-        table.button('deleteButton:name').enable(selectedRows === 1)
-        table.button('compareButton:name').enable(selectedRows >= 1)
+    thingTable.off("select deselect").on("select deselect", function (e, dt, type, indexes) {
+        const selectedRows = dt.rows({ selected: true }).count()
+        dt.buttons(['viewButton:name', 'editButton:name', 'deleteButton:name']).enable(selectedRows === 1)
+        dt.button('compareButton:name').enable(selectedRows >= 1)
     })
 
     $('#topOptions tbody').on('dblclick', 'tr', function () {
-        table.row(this).select()
-        viewItem(table.row({ selected: true }).data())
-    })
-}
-
-function initEntriesTable() {
-    const table = $("#entriesTable").DataTable({
-        select: true,
-        scroller: true,
-        columns: [
-            { data: "1", title: "Column 1" },
-            { data: "2", title: "Column 2" },
-            { data: "3", title: "Column 3" }
-        ],
-        layout: {
-            topStart: {
-                buttons: [
-                    {
-                        text: 'Add',
-                        name: "addButton",
-                        action: function (e, dt, node, config) {
-                            alert('Button activated')
-                        }
-                    },
-                    {
-                        text: 'Edit',
-                        name: "editButton",
-                        action: function (e, dt, node, config) {
-                            alert('Button activated')
-                        },
-                        enabled: false
-                    },
-                    {
-                        text: 'Delete',
-                        name: "deleteButton",
-                        action: function (e, dt, node, config) {
-                            alert('Button activated')
-                        },
-                        enabled: false
-                    },
-                ]
-            }
-        }
+        thingTable.row(this).select()
+        viewItem(thingTable.row({ selected: true }).data())
     })
 
-    table.off("select deselect").on("select deselect", function (e, dt, type, indexes) {
-        const selectedRows = table.rows({ selected: true }).count()
-        table.button('editButton:name').enable(selectedRows === 1)
-        table.button('deleteButton:name').enable(selectedRows === 1)
+    entriesTable.off("select deselect").on("select deselect", function (e, dt, type, indexes) {
+        const selectedRows = dt.rows({ selected: true }).count()
+        dt.buttons(['editButton:name', 'deleteButton:name']).enable(selectedRows === 1)
     })
 
     $('#entriesTable tbody').on('dblclick', 'tr', function () {
-        table.row(this).select()
+        entriesTable.row(this).select()
         alert("Edit this row")
     })
-}
+
+})
+
 
 function viewItem(rowData) {
     console.log(rowData)
@@ -140,26 +128,18 @@ function viewItem(rowData) {
 
     $("div.card-header h4").text(`Viewing ${rowData["1"]}`)
 
-    setupOverview()
-    setupEntries(tableTwoData[rowData.id])
+    setupCharts()
 
-}
-
-
-
-function setupEntries(data) {
     const table = $("#entriesTable").DataTable()
     table.rows().remove()
-    console.log(data)
-    table.rows.add(data).draw()
+    table.rows.add(tableTwoData[rowData.id]).draw()
+
 }
 
-function setupOverview() {
+function setupCharts() {
 
-    $('#chartsContainer div canvas').each(function () {
-        const chart = Chart.getChart($(this).attr("id"))
-        chart.destroy()
-        $(this).parent("div").remove()
+    $('#chartsContainer div.chart-container').each(function () {
+        $(this).remove()
     })
 
     const chartData = [
@@ -168,21 +148,16 @@ function setupOverview() {
         { labels: ['Pink', 'Teal', 'Lime'], data: [20, 40, 40] }
     ]
 
-    chartData.forEach((dataSet, index) => {
-        // Create a unique ID for each canvas
+    chartData.forEach(({ labels, data }, index) => {
         const canvasId = 'PieChart' + index
-
-        // Append canvas element to the container
         $('#chartsContainer').append(`<div class="chart-container"><canvas id="${canvasId}"></canvas></div>`)
-
-        // Initialize Chart.js for the new canvas
         new Chart($(`#${canvasId}`), {
             type: 'pie',
             data: {
-                labels: dataSet.labels,
+                labels: labels,
                 datasets: [{
                     label: 'My Dataset',
-                    data: dataSet.data,
+                    data: data,
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)',
                         'rgba(54, 162, 235, 0.2)',
