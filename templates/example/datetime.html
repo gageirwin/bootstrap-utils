@@ -1,0 +1,62 @@
+{% extends "global.html" %}
+
+{% block title %}datetime{% endblock %}
+{% block css %}
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='utils/DateTimeInput.js') }}"></script>
+<script src="{{ url_for('static', filename='js/datetime.js') }}"></script>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row">
+                        <div class="col-6"><input id="test_time-time" type="time" class="form-control"></div>
+                        <div class="col-6"><input id="test_time-text" type="text" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="card-footer">
+
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row">
+                        <div class="col-6"><input id="test_date-date" type="date" class="form-control"></div>
+                        <div class="col-6"><input id="test_date-text" type="text" class="form-control"></div>
+
+                    </div>
+                </div>
+                <div class="card-footer">
+
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+
+                    <div class="row">
+                        <div class="col-6"><input id="datetime-datetime" type="datetime-local" class="form-control">
+                        </div>
+                        <div class="col-6"><input id="datetime-text" type="text" class="form-control"></div>
+                    </div>
+                </div>
+                <div class="card-footer">
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

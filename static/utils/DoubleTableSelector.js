@@ -217,7 +217,8 @@ class DoubleTableSelector {
         options.DtOptions = {
             data: [{}],
             select: true,
-            paging: false,
+            scrollY: "50vh",
+            scroller: true,
             ...options.DtOptions
         }
         const table = new DataTable(`#${options.id}`, options.DtOptions)
