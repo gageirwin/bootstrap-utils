@@ -1,8 +1,7 @@
 {% extends "global.html" %}
 
 {% block title %}datetime{% endblock %}
-{% block css %}
-{% endblock %}
+{% block css %}{% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/datetime.js') }}"></script>
 {% endblock %}
@@ -10,11 +9,8 @@
 
 {% block content %}
 <div class="container mt-3">
-
-
     <div class="card">
         <div class="card-body">
-
             <div class="row gy-3 justify-content-center">
 
                 <div class="col-auto">
@@ -47,14 +43,9 @@
                     <label for="test_time-time">Input - text</label>
                     <input id="datetime-text" type="text" class="form-control">
                 </div>
+
             </div>
         </div>
-
     </div>
-
-
-
 </div>
-
-
 {% endblock %}
