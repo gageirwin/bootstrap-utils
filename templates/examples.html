@@ -9,53 +9,50 @@
 
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row g-3">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
+<div class="container mt-3">
 
-                    <div class="row">
-                        <div class="col-6"><input id="test_time-time" type="time" class="form-control"></div>
-                        <div class="col-6"><input id="test_time-text" type="text" class="form-control"></div>
-                    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <div class="row gy-3 justify-content-center">
+
+                <div class="col-auto">
+                    <label for="test_time-time">Input - time</label>
+                    <input id="test_time-time" type="time" class="form-control">
                 </div>
-                <div class="card-footer">
-
+                <div class="col-auto">
+                    <label for="test_time-text">Input - text</label>
+                    <input id="test_time-text" type="text" class="form-control">
                 </div>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
 
-                    <div class="row">
-                        <div class="col-6"><input id="test_date-date" type="date" class="form-control"></div>
-                        <div class="col-6"><input id="test_date-text" type="text" class="form-control"></div>
+                <div class="w-100"></div>
 
-                    </div>
+                <div class="col-auto">
+                    <label for="test_time-time">Input - date</label>
+                    <input id="test_date-date" type="date" class="form-control">
                 </div>
-                <div class="card-footer">
-
+                <div class="col-auto">
+                    <label for="test_time-time">Input - text</label>
+                    <input id="test_date-text" type="text" class="form-control">
                 </div>
-            </div>
-        </div>
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
 
-                    <div class="row">
-                        <div class="col-6"><input id="datetime-datetime" type="datetime-local" class="form-control">
-                        </div>
-                        <div class="col-6"><input id="datetime-text" type="text" class="form-control"></div>
-                    </div>
+                <div class="w-100"></div>
+
+                <div class="col-auto">
+                    <label for="test_time-time">Input - datetime-local</label>
+                    <input id="datetime-datetime" type="datetime-local" class="form-control">
                 </div>
-                <div class="card-footer">
-
+                <div class="col-auto">
+                    <label for="test_time-time">Input - text</label>
+                    <input id="datetime-text" type="text" class="form-control">
                 </div>
             </div>
         </div>
+
     </div>
+
+
 
 </div>
 
