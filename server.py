@@ -1,16 +1,21 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect
 
 app = Flask(__name__)
 
 
 @app.route("/")
-def home():
-    return "Welcome to the Flask server!"
+def index():
+    return redirect("/examples")
 
 
-@app.route("/example/datetime")
-def example_datetime():
-    return render_template("example/datetime.html")
+@app.route("/examples")
+def examples():
+    return render_template("examples.html")
+
+
+@app.route("/form")
+def form():
+    return render_template("form.html")
 
 
 if __name__ == "__main__":

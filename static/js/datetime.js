@@ -1,14 +1,8 @@
 $(document).ready(function () {
-    new DateTimeInput("#test_time-time", {
-        initHours: 11,
-        initMinutes: 30,
-        initPeriod: "AM"
-    })
-    new DateTimeInput("#test_time-text", { type: "time", hour12: false })
-
-    new DateTimeInput("#test_date-text", { type: "date" })
-    new DateTimeInput("#test_date-date")
-
-    new DateTimeInput("#datetime-datetime", { hour12: false })
-    new DateTimeInput("#datetime-text", { type: "datetime" })
+    $("#test_time-time, #test_time-text").DateTimeInput({ type: "time" })
+    $("#test_date-text, #test_date-date").DateTimeInput({ type: "date" })
+    const test1 = $("#datetime-text").DateTimeInput({ type: "datetime" })
+    const test2 = $("#datetime-datetime").DateTimeInput({ type: "datetime" })
+    console.log(test1)
+    console.log(test2)
 })
