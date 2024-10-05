@@ -677,56 +677,79 @@ class CheckboxDropdown {
 // #region DateTimeInput
 $('<style>').prop('type', 'text/css').text(`
     :root{
-        --dti-calender-highlight: rgba(180, 180, 180, 0.47)
+        --dti-highlight: rgba(180, 180, 180, 0.47)
     }
-
     :root[data-bs-theme="dark"]{
-        --dti-calender-highlight: rgba(0, 0, 0, 0.47)
-    }
-
-    .dti-calender-month-control {
-        width: 3ch;
-        text-align: center;
-    }
-
-    .dti-calender-item-week {
-        width: 3ch;
-        text-align: center;
-        font-weight: bold;
-    }
-
-    .dti-calender-day {
-        width: 3.2ch;
-        text-align: center;
-    }
-
-    .dti-calender-day:hover {
-        background: var(--dti-calender-highlight);
-    }
-
-    .dti-calender-day-today{
-        color: var(--bs-primary);
-        font-weight: bold;
-        width: 3ch;
-    }
-
-    .dti-calender-day-disabled{
-        color: #aaa
-    }
-
-    .dti-time-display {
-        width: 2ch; 
-        text-align: center;
+        --dti-highlight: rgba(0, 0, 0, 0.47)
     }
 
     [data-dti-clickable]{
         cursor: pointer;
     }
-
+    [data-dti-clickable]:hover{
+        background: var(--dti-highlight);
+    }
     .dti-dropdown-menu{
         width: min-content;
         min-width: auto;
     }
+
+    /* Clock */
+    .dti-time-item {
+        display:flex;
+        align-items: center;
+        justify-content:center;
+        width: 2rem;
+        height: 2rem;
+    }
+    .dti-time-sep{
+        display:flex;
+        align-items: center;
+        justify-content:center;
+        width: 1rem;
+        height: 2rem;
+    }
+    .dti-time-period{
+        width: 3.1rem;
+    }
+
+    /* Calender */
+    #dti-calender-days-menu, #dti-calender-month-menu, #dti-calender-year-menu{
+        width: 256px;
+        height: 260px;
+    }
+    .dti-calender-item {
+        display:flex;
+        align-items: center;
+        justify-content:center;
+        width: 2rem;
+        height: 2rem;
+    }
+    .dti-calender-item-today{
+        color: var(--bs-primary);
+        font-weight: bold;
+    }
+    .dti-calender-item-disabled{
+        color: #aaa
+    }
+    .dti-calender-item-month{
+        display:flex;
+        align-items: center;
+        justify-content:center;
+        width: 4.8rem;
+        height: 3rem;
+    }
+    .dti-calender-item-year{
+        display:flex;
+        align-items: center;
+        justify-content:center;
+        width: 4.8rem;
+        height: 3rem;  
+    }
+    .dti-calender-month-current, .dti-calender-year-current{
+        color: var(--bs-primary)
+    }
+
 `).appendTo('head')
 
 class DateTimeInput {
@@ -756,7 +779,7 @@ class DateTimeInput {
         this.validateOptions(options)
         this.loadOptions(options)
 
-        this.$input.attr("data-bs-toggle", "dropdown").off("click").on("click", (e) => e.preventDefault())
+        this.$input.attr("data-bs-toggle", "dropdown")
 
         switch (this.type) {
             case "time":
@@ -769,6 +792,9 @@ class DateTimeInput {
                 this.initDateTimeMenu()
                 break
         }
+
+        this.$menu.on("click", (e) => { e.stopPropagation() })
+
         this.setEventHandlers()
 
         DateTimeInput.instances[$input.attr("id")] = this
@@ -785,7 +811,7 @@ class DateTimeInput {
         const menu = this.getDateMenu()
         this.$menu = $(`<div class="dropdown-menu p-2 dti-dropdown-menu">${menu}</div>`)
         this.$input.after(this.$menu)
-        this.setDate().updateCalender()
+        this.updateCalenderDaysMenu()
 
     }
 
@@ -796,12 +822,12 @@ class DateTimeInput {
                 <div class="dropdown-menu p-2 dti-dropdown-menu">
                     <div class="d-flex">
                         ${menuDate}
-                        <div class="ms-3 me-2 vr"></div>
+                        <div class="ms-2 me-2 vr"></div>
                         ${menuTime}
                     </div>
                 </div>`)
         this.$input.after(this.$menu)
-        this.setDate().updateCalender()
+        this.updateCalenderDaysMenu()
         this.updateClock()
     }
 
@@ -829,32 +855,11 @@ class DateTimeInput {
 
         if (isTimeOrDatetime) {
             this.hour12 = options.hour12 ?? true
-            let {
-                initHours = now.getHours(),
-                initMinutes = now.getMinutes(),
-                initPeriod
-            } = options
-
-            if (this.hour12) {
-                initHours = initHours % 12 || 12
-                initHours += initPeriod === "PM" ? 12 : 0
-            }
-
-            this.hour = initHours
-            this.minute = initMinutes
+            this.time = new Date(0, 0, 0, now.getHours(), now.getMinutes())
         }
         if (isDateOrDatetime) {
-            this.dateFormat = {
-                method: "toDateString",
-                params: null
-            }
-
-            this.calender = {
-                month: now.getMonth(),
-                monthStr: now.toLocaleString('default', { month: 'long' }),
-                selectedDay: now.getDate(),
-                year: now.getFullYear()
-            }
+            this.calender = new Date(now.getFullYear(), now.getMonth())
+            this.date = new Date(now.getFullYear(), now.getMonth(), now.getDate())
         }
     }
 
@@ -862,35 +867,27 @@ class DateTimeInput {
         return `
             <div class="d-flex justify-content-center align-items-center">
                 <div>
-                    <div class="d-flex justify-content-center mb-2">
-                        <div data-dti-clickable="dti-increment-hour" class="mx-2">
-                            <i class="bi bi-caret-up-fill dti-time-display"></i>
-                        </div>
-                        <div class="mx-1"></div>
-                        <div data-dti-clickable="dti-increment-minute" class="mx-2">
-                            <i class="bi bi-caret-up-fill dti-time-display"></i>
-                        </div>
+                    <div class="d-flex">
+                        <div data-dti-clickable="increment-hour" class="dti-time-item"><i class="bi bi-caret-up-fill"></i></div>
+                        <div class="dti-time-sep">&nbsp;</div>
+                        <div data-dti-clickable="increment-minute" class="dti-time-item"><i class="bi bi-caret-up-fill"></i></div>
                     </div>
 
-                    <div class="d-flex justify-content-center align-items-center mb-2">
-                        <div id="hour" class="dti-time-display mx-2">0</div>
-                        <div class="mx-1">:</div>
-                        <div id="minute" class="dti-time-display mx-2">00</div>
+                    <div class="d-flex my-2">
+                        <div id="hour" class="dti-time-item">0</div>
+                        <div class="dti-time-sep">:</div>
+                        <div id="minute" class="dti-time-item">00</div>
                     </div>
 
-                    <div class="d-flex justify-content-center">
-                        <div data-dti-clickable="dti-decrement-hour" class="mx-2">
-                            <i class="bi bi-caret-down-fill dti-time-display"></i>
-                        </div>
-                        <div class="mx-1"></div>
-                        <div data-dti-clickable="dti-decrement-minute" class="mx-2">
-                            <i class="bi bi-caret-down-fill dti-time-display"></i>
-                        </div>
+                    <div class="d-flex">
+                        <div data-dti-clickable="decrement-hour" class="dti-time-item"><i class="bi bi-caret-down-fill"></i></div>
+                        <div class="dti-time-sep">&nbsp;</div>
+                        <div data-dti-clickable="decrement-minute" class="dti-time-item"><i class="bi bi-caret-down-fill"></i></div>
                     </div>
                 </div>
                 ${this.hour12 ? `
-                <div class="ms-2">
-                    <div data-dti-clickable="dti-period" class="btn btn-primary" style="width: 6ch;"></div>
+                <div class="mx-1">
+                    <div data-dti-clickable="change-period" class="btn btn-primary dti-time-period"></div>
                 </div>
                 ` : ""}
             </div>`
@@ -898,229 +895,286 @@ class DateTimeInput {
 
     getDateMenu() {
         return `
-            <div class="row">
+            <div id="dti-date-menu" class="row">
 
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <div id="dti-calender-month-year" class="flex-fill"></div>
-                    <div data-dti-clickable="dti-calender-month-prev" class="dti-calender-month-control"><i class="bi bi-caret-left-fill"></i></div>
-                    <div data-dti-clickable="dti-calender-month-next" class="dti-calender-month-control"><i class="bi bi-caret-right-fill"></i></div>
+                    <div data-dti-clickable="month-menu" id="dti-calender-month" class="px-2 py-1"></div>
+                    <div data-dti-clickable="year-menu" id="dti-calender-year" class="px-2 py-1"></div>
+                    <div data-dti-clickable="prev-month" class="dti-calender-item ms-auto"><i class="bi bi-caret-left-fill"></i></div>
+                    <div data-dti-clickable="next-month" class="dti-calender-item"><i class="bi bi-caret-right-fill"></i></div>
                 </div>
                 
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="dti-calender-item-week">Su</div>
-                    <div class="dti-calender-item-week">Mo</div>
-                    <div class="dti-calender-item-week">Tu</div>
-                    <div class="dti-calender-item-week">We</div>
-                    <div class="dti-calender-item-week">Th</div>
-                    <div class="dti-calender-item-week">Fr</div>
-                    <div class="dti-calender-item-week">Sa</div>
+                <div id="dti-calender-days-menu">
+                    <div class="d-flex">
+                        <div class="dti-calender-item fw-bold">Su</div>
+                        <div class="dti-calender-item fw-bold">Mo</div>
+                        <div class="dti-calender-item fw-bold">Tu</div>
+                        <div class="dti-calender-item fw-bold">We</div>
+                        <div class="dti-calender-item fw-bold">Th</div>
+                        <div class="dti-calender-item fw-bold">Fr</div>
+                        <div class="dti-calender-item fw-bold">Sa</div>
+                    </div>
+                    <div id="dti-calender-days" class="d-flex flex-wrap"></div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <div data-dti-clickable="clear-calender" class="px-2 py-1">Clear</div>
+                        <div data-dti-clickable="today-calender" class="px-2 py-1">Today</div>
+                    </div>
                 </div>
 
-                <div class="col-12"></div>
+                <div id="dti-calender-month-menu" style="display:none;">
+                    <div id="dti-calender-months" class="d-flex justify-content-center flex-wrap"></div>
+                    <div class="d-flex justify-content-center align-items-center mt-2">
+                        <div data-dti-clickable="cancel-month-selection" class="px-2 py-1">Cancel</div>
+                    </div>
+                </div>
 
-                <div id="dti-calender-days" class="d-flex justify-content-center align-items-center flex-wrap"></div>
-                
-                <div class="col-12"></div>
-
-                <div class="d-flex justify-content-between align-items-center mt-1">
-                    <div data-dti-clickable="dti-calender-clear" style="text-decoration: none;">Clear</div>
-                    <div data-dti-clickable="dti-calender-today" style="text-decoration: none;">Today</div>
+                <div id="dti-calender-year-menu" style="display:none;">
+                    <div id="dti-calender-years" class="d-flex justify-content-center flex-wrap"></div>
+                    <div class="d-flex justify-content-center align-items-center mt-2">
+                        <div data-dti-clickable="cancel-year-selection" class="px-2 py-1">Cancel</div>
+                    </div>
                 </div>
 
             </div>`
     }
 
+    getYearMenu() {
+
+    }
+
     setEventHandlers() {
-        this.$menu.off("click").on("click", (e) => {
-            e.stopPropagation()
-        })
-        this.$menu.off("click").on("click", "div[data-dti-clickable]", (e) => {
+        this.$menu.children(":first").off("click").on("click", "div[data-dti-clickable]", (e) => {
             e.preventDefault()
             e.stopPropagation()
             const $target = $(e.currentTarget)
             switch ($target.data("dti-clickable")) {
-                case "dti-increment-hour":
-                    this.addHour(1).updateClock().setInput()
+                case "increment-hour":
+                    this.addHours(1).updateClock().setInputVal()
                     break
-                case "dti-decrement-hour":
-                    this.addHour(-1).updateClock().setInput()
+                case "decrement-hour":
+                    this.addHours(-1).updateClock().setInputVal()
                     break
-                case "dti-increment-minute":
-                    this.addMinute(1).updateClock().setInput()
+                case "increment-minute":
+                    this.addMinutes(1).updateClock().setInputVal()
                     break
-                case "dti-decrement-minute":
-                    this.addMinute(-1).updateClock().setInput()
+                case "decrement-minute":
+                    this.addMinutes(-1).updateClock().setInputVal()
                     break
-                case "dti-period":
-                    this.addHour($target.text() === "AM" ? 12 : -12).updateClock().setInput()
+                case "change-period":
+                    this.addHours($target.text() === "AM" ? 12 : -12).updateClock().setInputVal()
                     break
                 case "dti-calender-day":
-                    this.setDate(parseInt($target.text())).updateCalender().setInput()
+                    this.setDate(parseInt($target.text())).updateCalenderDaysMenu().setInputVal()
                     break
-                case "dti-calender-day-lastMonth":
-                    this.addCalenderMonth(-1).setDate(parseInt($target.text())).updateCalender().setInput()
+                case "last-month-date":
+                    this.addCalenderMonths(-1).setDate(parseInt($target.text())).updateCalenderDaysMenu().setInputVal()
                     break
-                case "dti-calender-day-nextMonth":
-                    this.addCalenderMonth(1).setDate(parseInt($target.text())).updateCalender().setInput()
+                case "next-month-date":
+                    this.addCalenderMonths(1).setDate(parseInt($target.text())).updateCalenderDaysMenu().setInputVal()
                     break
-                case "dti-calender-month-next":
-                    this.addCalenderMonth(1).updateCalender()
+                case "next-month":
+                    this.addCalenderMonths(1).updateCalenderDaysMenu()
                     break
-                case "dti-calender-month-prev":
-                    this.addCalenderMonth(-1).updateCalender()
+                case "prev-month":
+                    this.addCalenderMonths(-1).updateCalenderDaysMenu()
                     break
-                case "dti-calender-clear":
+                case "clear-calender":
                     this.clearInput()
                     break
-                case "dti-calender-today":
+                case "today-calender":
                     const now = new Date()
-
-                    this.calender = {
-                        month: now.getMonth(),
-                        monthStr: now.toLocaleString('default', { month: 'long' }),
-                        selectedDay: now.getDate(),
-                        year: now.getFullYear()
-                    }
-
-                    this.setDate().updateCalender().setInput()
+                    this.setDate(now.getDate(), now.getMonth(), now.getFullYear())
+                        .updateCalenderDaysMenu()
+                        .setInputVal()
+                    break
+                case "month-menu":
+                    this.$menu.find("#dti-calender-days-menu").hide()
+                    this.$menu.find("#dti-calender-year-menu").hide()
+                    this.updateCalenderMonthMenu()
+                    this.$menu.find("#dti-calender-month-menu").show()
+                    break
+                case "select-month":
+                    this.$menu.find("#dti-calender-days-menu").show()
+                    this.$menu.find("#dti-calender-month-menu").hide()
+                    this.setCalender(this.calender.getFullYear(), $target.attr("value"))
+                    this.updateCalenderDaysMenu()
+                    break
+                case "year-menu":
+                    this.$menu.find("#dti-calender-days-menu").hide()
+                    this.$menu.find("#dti-calender-month-menu").hide()
+                    this.updateCalenderYearMenu()
+                    this.$menu.find("#dti-calender-year-menu").show()
+                    break
+                case "select-year":
+                    this.$menu.find("#dti-calender-days-menu").show()
+                    this.$menu.find("#dti-calender-year-menu").hide()
+                    this.setCalender($target.attr("value"), this.calender.getMonth())
+                    this.updateCalenderDaysMenu()
+                    break
+                case "cancel-year-selection":
+                case "cancel-month-selection":
+                    this.$menu.find("#dti-calender-month-menu").hide()
+                    this.$menu.find("#dti-calender-year-menu").hide()
+                    this.$menu.find("#dti-calender-days-menu").show()
                     break
             }
         })
     }
 
-    getTime(hour12 = this.hour12) {
-        let hour = this.hour
-        let period = null
-        if (hour12) {
-            period = this.hour >= 12 ? "PM" : "AM"
-            hour = this.hour % 12
-            hour = hour === 0 ? 12 : hour
-        }
-        return [hour, this.minute, period]
-    }
-
-    addHour(h) {
-        this.hour += h
-        this.hour = this.hour === 24 ? 0 : this.hour
-        this.hour = this.hour === -1 ? 23 : this.hour
+    setDate(day, month = this.calender.getMonth(), year = this.calender.getFullYear()) {
+        this.date.setFullYear(year)
+        this.date.setMonth(month)
+        this.date.setDate(day)
+        this.setCalender(year, month)
         return this
     }
 
-    addMinute(m) {
-        this.minute += m
-        if (this.minute === 60) {
-            this.minute = 0
-            this.addHour(1)
-        }
-        else if (this.minute === -1) {
-            this.minute = 59
-            this.addHour(-1)
-        }
+    setCalender(year, month) {
+        this.calender.setFullYear(year)
+        this.calender.setMonth(month)
         return this
     }
 
-    addCalenderYear(y) {
-        this.calender.year += y
+    addHours(hours) {
+        this.time.setHours(this.time.getHours() + hours)
         return this
     }
 
-    addCalenderMonth(m) {
-        this.calender.month += m
-        if (this.calender.month === 13) {
-            this.calender.month = 1
-            this.addCalenderYear(1)
-        }
-        else if (this.calender.month === 0) {
-            this.calender.month = 12
-            this.addCalenderYear(-1)
-        }
-        const date = new Date()
-        date.setMonth(this.calender.month)
-        this.calender.monthStr = date.toLocaleString('default', { month: 'long' })
+    addMinutes(minutes) {
+        this.time.setMinutes(this.time.getMinutes() + minutes)
         return this
     }
 
-    setHour(h) {
-        this.hour = h
-    }
-
-    setMinute(m) {
-        this.minute = m
-    }
-
-    setDate(day = this.calender.selectedDay, month = this.calender.month, year = this.calender.year) {
-        this.day = day
-        this.month = month
-        this.year = year
-        this.date = new Date(this.year, this.month, this.day)
+    addCalenderYears(years) {
+        this.calender.setFullYear(this.calender.getFullYear() + years)
         return this
+    }
+
+    addCalenderMonths(months) {
+        this.calender.setMonth(this.calender.getMonth() + months)
+        return this
+
     }
 
     updateClock() {
-        const [hour, minute, period] = this.getTime()
+        let hour = this.time.getHours()
+        const minute = this.time.getMinutes()
+        let period
+
+        if (this.hour12) {
+            period = hour >= 12 ? "PM" : "AM"
+            hour = hour % 12
+            hour = hour === 0 ? 12 : hour
+        }
+
         this.$menu.find("#hour").text(hour)
         this.$menu.find("#minute").text(String(minute).padStart(2, "0"))
         if (period !== undefined)
-            this.$menu.find(`div[data-dti-clickable="dti-period"]`).text(period)
+            this.$menu.find(`div[data-dti-clickable="change-period"]`).text(period)
         return this
     }
 
-    updateCalender() {
-        this.$menu.find("#dti-calender-month-year").text(`${this.calender.monthStr} ${this.calender.year}`)
-        this.$menu.find("#dti-calender-days").empty()
+    updateCalenderDaysMenu() {
+        const cal_year = this.calender.getFullYear()
+        const cal_month = this.calender.getMonth()
 
-        let firstDayOfMonth = new Date(this.calender.year, this.calender.month, 1).getDay()
-        let lastDateOfMonth = new Date(this.calender.year, this.calender.month + 1, 0).getDate()
-        let lastDayOfMonth = new Date(this.calender.year, this.calender.month, lastDateOfMonth).getDay()
-        let lastDateOfLastMonth = new Date(this.calender.year, this.calender.month, 0).getDate()
+        const year = this.date.getFullYear()
+        const month = this.date.getMonth()
+        const day = this.date.getDate()
 
-        let dates = []
+        this.$menu.find("#dti-calender-month").text(this.calender.toLocaleString('default', { month: 'long' }))
+        this.$menu.find("#dti-calender-year").text(cal_year)
+
+        let firstDayOfMonth = new Date(cal_year, cal_month, 1).getDay()
+        let lastDateOfMonth = new Date(cal_year, cal_month + 1, 0).getDate()
+        let lastDayOfMonth = new Date(cal_year, cal_month, lastDateOfMonth).getDay()
+        let lastDateOfLastMonth = new Date(cal_year, cal_month, 0).getDate()
+
+        const date_divs = []
 
         for (let i = firstDayOfMonth; i > 0; i--) {
-            dates.push(`<div data-dti-clickable="dti-calender-day-lastMonth" class="dti-calender-day dti-calender-day-disabled">${lastDateOfLastMonth - i + 1}</div>`)
+            date_divs.push(`<div data-dti-clickable="last-month-date" class="dti-calender-item dti-calender-item-disabled">${lastDateOfLastMonth - i + 1}</div>`)
         }
 
         for (let i = 1; i <= lastDateOfMonth; i++) {
-            const today = (i === this.day && this.month === this.calender.month && this.year === this.calender.year)
-            dates.push(`
-                <div data-dti-clickable="dti-calender-day" class="dti-calender-day ${today ? "dti-calender-day-today" : ""}">
+            const today = (i === day && month === cal_month && year === cal_year)
+            date_divs.push(`
+                <div data-dti-clickable="dti-calender-day" class="dti-calender-item ${today ? "dti-calender-item-today" : ""}">
                     <span>${i}</span>
                 </div>`)
         }
 
-        const remainder = (7 * 6) - dates.length + lastDayOfMonth
+        const remainder = (7 * 6) - date_divs.length + lastDayOfMonth
         for (let i = lastDayOfMonth; i < remainder; i++) {
-            dates.push(`<div data-dti-clickable="dti-calender-day-nextMonth" class="dti-calender-day dti-calender-day-disabled">${i - lastDayOfMonth + 1}</div>`)
+            date_divs.push(`<div data-dti-clickable="next-month-date" class="dti-calender-item dti-calender-item-disabled">${i - lastDayOfMonth + 1}</div>`)
         }
 
-        this.$menu.find("#dti-calender-days").append(dates.join("\n"))
+        this.$menu.find("#dti-calender-days").empty()
+        this.$menu.find("#dti-calender-days").append(date_divs.join("\n"))
+
         this.setEventHandlers()
         return this
     }
 
-    setInput() {
+    updateCalenderMonthMenu() {
+        const cal_month = this.calender.getMonth()
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        const month_divs = []
+        months.forEach((month, index) => {
+            month_divs.push(`<div data-dti-clickable="select-month" class="dti-calender-item-month fw-bold ${index === cal_month ? "dti-calender-month-current" : ""}" value="${index}">${month}</div>`)
+        })
+        this.$menu.find("#dti-calender-months").empty()
+        this.$menu.find("#dti-calender-months").append(month_divs.join("\n"))
 
+        this.setEventHandlers()
+        return this
+    }
+
+    // needs to be generalized
+    updateCalenderYearMenu() {
+        const cal_year = this.calender.getFullYear()
+
+        const years = [
+            cal_year - 4,
+            cal_year - 3,
+            cal_year - 2,
+            cal_year - 1,
+            cal_year,
+            cal_year + 1,
+            cal_year + 2,
+            cal_year + 3,
+            cal_year + 4,
+            cal_year + 5,
+            cal_year + 6,
+            cal_year + 7]
+        const year_divs = []
+        years.forEach((year) => {
+            year_divs.push(`<div data-dti-clickable="select-year" class="dti-calender-item-year fw-bold ${year === cal_year ? "dti-calender-year-current" : ""}" value="${year}">${year}</div>`)
+        })
+        this.$menu.find("#dti-calender-years").empty()
+        this.$menu.find("#dti-calender-years").append(year_divs.join("\n"))
+
+        this.setEventHandlers()
+        return this
+    }
+
+    setInputVal() {
         let value
         if (this.type === "time") {
-            const [hour, minute, period] = this.getTime()
-            value = this.$input.prop("type") === "time"
-                ? `${String(this.hour).padStart(2, "0")}:${String(this.minute).padStart(2, "0")}`
-                : `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}${period ? " " + period : ""}`
+            value = `${String(this.time.getHours()).padStart(2, "0")}:${String(this.time.getMinutes()).padStart(2, "0")}`
         }
         else if (this.type === "date") {
-            value = this.$input.prop("type") === "text"
-                ? this.date[this.dateFormat.method](this.dateFormat.params)
-                : this.date.toISOString().split('T')[0]
+            value = this.date.toISOString().split('T')[0]
         }
         else if (this.type === "datetime") {
-            value = `${this.year}-${String(this.month).padStart(2, "0")}-${String(this.day).padStart(2, "0")}T${String(this.hour).padStart(2, "0")}:${String(this.minute).padStart(2, "0")}`
+            value = this.date.toISOString().split('T')[0] + "T" + `${String(this.time.getHours()).padStart(2, "0")}:${String(this.time.getMinutes()).padStart(2, "0")}`
         }
-        this.$input.val(value)
+        this.$input.val(value).trigger("change")
         return this
     }
 
     clearInput() {
-        this.$input.val("")
+        this.$input.val("").trigger("change")
         return this
     }
 }
