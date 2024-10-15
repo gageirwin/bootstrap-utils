@@ -18,5 +18,10 @@ def form():
     return render_template("form.html")
 
 
+@app.route("/sidebar")
+def sidebar():
+    return render_template("sidebar.html")
+
+
 if __name__ == "__main__":
     app.run(debug=True)
