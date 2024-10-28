@@ -13,11 +13,6 @@ def examples():
     return render_template("examples.html")
 
 
-@app.route("/form")
-def form():
-    return render_template("form.html")
-
-
 @app.route("/sidebar")
 def sidebar():
     return render_template("sidebar.html")
